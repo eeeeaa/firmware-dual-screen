@@ -255,6 +255,8 @@ public:
     void loadFile(JsonDocument &jsonDoc, bool checkFS = true);
     void factoryReset();
     void validateConfig();
+    // Clears pin settings that collide with EXT_SCREEN_RESERVED_PINS (no-op on other boards)
+    void releaseScreenPins();
     void fromJson(JsonObject obj);
     void toJson(JsonObject obj) const;
 

@@ -1,5 +1,6 @@
 #include "powerSave.h"
 #include "display.h"
+#include "info_screen.h"
 #include "settings.h"
 
 /* Check if it's time to put the device to sleep */
@@ -38,6 +39,7 @@ void sleepModeOn() {
     fadeOutScreen(startDimmerBright);
 
     panelSleep(true); //  power down screen
+    infoScreenSleep(true);
 
     disableCore0WDT();
 #if SOC_CPU_CORES_NUM > 1
@@ -52,6 +54,7 @@ void sleepModeOff() {
     setCpuFrequencyMhz(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ);
 
     panelSleep(false); // wake the screen back up
+    infoScreenSleep(false);
 
     getBrightness();
     enableCore0WDT();

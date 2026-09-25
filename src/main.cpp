@@ -170,6 +170,7 @@ volatile int tftHeight = VECTOR_DISPLAY_DEFAULT_WIDTH;
 
 #include "core/bus_HAL.h"
 #include "core/display.h"
+#include "core/info_screen.h"
 #include "core/led_control.h"
 #include "core/mykeyboard.h"
 #include "core/sd_functions.h"
@@ -520,6 +521,7 @@ void setup() {
     // Some board interfaces initialize or reset the backlight in post-setup,
     // so re-apply the stored brightness after that stage completes.
     setBrightness(bruceConfig.bright, false);
+    infoScreenBegin();
     // end of post gpio begin
 
     // #ifndef USE_TFT_eSPI_TOUCH

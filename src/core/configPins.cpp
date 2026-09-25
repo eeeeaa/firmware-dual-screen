@@ -350,6 +350,7 @@ void BruceConfigPins::createFile() {
 }
 
 void BruceConfigPins::saveFile() {
+    releaseScreenPins();
     JsonDocument jsonDoc;
     loadFile(jsonDoc);
 
@@ -402,6 +403,56 @@ void BruceConfigPins::validateConfig() {
     validateI2CPins(i2c_bus);
     validateUARTPins(uart_bus);
     validateUARTPins(gps_bus);
+    releaseScreenPins();
+}
+
+void BruceConfigPins::releaseScreenPins() {
+#ifdef EXT_SCREEN_RESERVED_PINS
+    static constexpr int reserved[] = EXT_SCREEN_RESERVED_PINS;
+    auto isReserved = [](int pin) {
+        for (int r : reserved)
+            if (pin == r) return true;
+        return false;
+    };
+    auto release = [&](gpio_num_t &pin) {
+        if (isReserved(pin)) pin = GPIO_NUM_NC;
+    };
+    // Single-pin settings fall back to their build defaults instead of NC
+    auto restore = [&](int &pin, int fallback) {
+        if (isReserved(pin)) pin = fallback;
+    };
+
+    for (SPIPins *bus : {
+#if !defined(LITE_VERSION)
+             &ST25R_bus,
+             &LoRa_bus,
+             &W5500_bus,
+#endif
+             &CC1101_bus,
+             &NRF24_bus,
+             &PN532_bus,
+             &SDCARD_bus
+         }) {
+        release(bus->sck);
+        release(bus->miso);
+        release(bus->mosi);
+        release(bus->cs);
+        release(bus->io0);
+        release(bus->io2);
+    }
+    for (I2CPins *bus : {&sys_i2c, &i2c_bus}) {
+        release(bus->sda);
+        release(bus->scl);
+    }
+    for (UARTPins *bus : {&uart_bus, &gps_bus}) {
+        release(bus->rx);
+        release(bus->tx);
+    }
+    restore(irTx, TXLED);
+    restore(irRx, RXLED);
+    restore(rfTx, GROVE_SDA);
+    restore(rfRx, GROVE_SCL);
+#endif
 }
 #if !defined(LITE_VERSION)
 void BruceConfigPins::setLoRaPins(SPIPins value) {

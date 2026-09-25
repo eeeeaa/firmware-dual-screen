@@ -1,6 +1,7 @@
 #include "bus_HAL.h"
 #include "core/configPins.h"
 #include "globals.h"
+#include "info_screen.h"
 #include "soc/soc_caps.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -346,6 +347,8 @@ static gpio_num_t sharedSpiMosi = GPIO_NUM_NC;
 static SPIClass *acquireSharedSPI(gpio_num_t sck, gpio_num_t miso, gpio_num_t mosi) {
     if (sharedSpiSck != sck || sharedSpiMiso != miso || sharedSpiMosi != mosi) {
         if (sharedSpiSck != GPIO_NUM_NC) AUX_SPI.end();
+        // AUX_SPI runs on the info screen's SPI host
+        infoScreenReleaseBus();
         if (AUX_SPI.begin((int8_t)sck, (int8_t)miso, (int8_t)mosi)) {
             // StickCPluses share SCK pins with SDCard, but not MISO and MOSI
             // AUX_SPI must be restarted every time we use it with every module in legacy mode

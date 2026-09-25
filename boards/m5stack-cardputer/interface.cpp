@@ -87,6 +87,13 @@ void _setup_gpio() {
     pinMode(5, OUTPUT);
     // Set GPIO5 HIGH for SD card compatibility (thx for the tip @bmorcelli & 7h30th3r0n3)
     digitalWrite(5, HIGH);
+#ifdef HAS_INFO_SCREEN
+    // The external screen shares the SD card's SPI bus: keep the card deselected while it initializes
+    pinMode(SDCARD_CS, OUTPUT);
+    digitalWrite(SDCARD_CS, HIGH);
+    // ILI9341 is not an IPS panel like the built-in ST7789
+    bruceConfig.colorInverted = 0;
+#endif
 }
 volatile bool kb_interrupt = false;
 void IRAM_ATTR gpio_isr_handler(void *arg) {
@@ -145,12 +152,15 @@ void _post_setup_gpio() {
     bruceConfigPins.NRF24_bus.cs = (gpio_num_t)6;
     bruceConfigPins.NRF24_bus.io0 = (gpio_num_t)4;
 
-    pinMode(bruceConfigPins.NRF24_bus.cs, OUTPUT);
-    pinMode(bruceConfigPins.CC1101_bus.cs, OUTPUT);
-    pinMode(bruceConfigPins.LoRa_bus.cs, OUTPUT);
-    digitalWrite(bruceConfigPins.NRF24_bus.cs, HIGH);
-    digitalWrite(bruceConfigPins.CC1101_bus.cs, HIGH);
-    digitalWrite(bruceConfigPins.LoRa_bus.cs, HIGH);
+    // Defaults above may land on external screen pins
+    bruceConfigPins.releaseScreenPins();
+
+    for (gpio_num_t cs :
+         {bruceConfigPins.NRF24_bus.cs, bruceConfigPins.CC1101_bus.cs, bruceConfigPins.LoRa_bus.cs}) {
+        if (cs == GPIO_NUM_NC) continue;
+        pinMode(cs, OUTPUT);
+        digitalWrite(cs, HIGH);
+    }
 
     tca.matrix(7, 8);
     tca.flush();
